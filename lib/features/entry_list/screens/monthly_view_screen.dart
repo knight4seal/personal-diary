@@ -196,6 +196,7 @@ class _MonthlyViewScreenState extends ConsumerState<MonthlyViewScreen> {
                           content: entry.content,
                           dateTime: entry.entryDate,
                           isVoiceTranscribed: entry.isVoiceTranscribed,
+                          lastEditedAt: entry.lastEditedAt,
                         );
                       },
                     );

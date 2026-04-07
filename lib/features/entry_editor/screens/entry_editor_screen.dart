@@ -21,6 +21,8 @@ class _EntryEditorScreenState extends ConsumerState<EntryEditorScreen> {
   late DateTime _selectedDate;
   bool _isEditing = false;
   bool _isSaving = false;
+  bool _isLocked = false;
+  String? _remainingTime;
   String? _audioFilePath;
 
   @override
@@ -38,12 +40,30 @@ class _EntryEditorScreenState extends ConsumerState<EntryEditorScreen> {
     final repo = ref.read(diaryRepositoryProvider);
     final entry = await repo.getEntry(int.parse(widget.entryId!));
     if (entry != null && mounted) {
+      final diff = DateTime.now().difference(entry.lastEditedAt);
+      final locked = diff.inHours >= 72;
+      String? remaining;
+      if (!locked) {
+        final left = const Duration(hours: 72) - diff;
+        final h = left.inHours;
+        final m = left.inMinutes % 60;
+        remaining = 'Editable for ${h}h ${m}m';
+      }
       setState(() {
         _titleController.text = entry.title ?? '';
         _contentController.text = entry.content;
         _selectedDate = entry.entryDate;
         _audioFilePath = entry.audioFilePath;
+        _isLocked = locked;
+        _remainingTime = remaining;
       });
+      if (locked) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('This entry is locked (72h edit window expired)'),
+          ),
+        );
+      }
     }
   }
 
@@ -168,11 +188,11 @@ class _EntryEditorScreenState extends ConsumerState<EntryEditorScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: _isSaving ? null : _save,
+            onPressed: (_isSaving || _isLocked) ? null : _save,
             child: Text(
-              'Save',
+              _isLocked ? 'Locked' : 'Save',
               style: TextStyle(
-                color: _isSaving ? grey : fg,
+                color: (_isSaving || _isLocked) ? grey : fg,
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
               ),
@@ -192,6 +212,23 @@ class _EntryEditorScreenState extends ConsumerState<EntryEditorScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Edit window status
+                      if (_isEditing && _isLocked)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            'Editing locked \u2014 72h window expired',
+                            style: TextStyle(color: grey, fontSize: 12),
+                          ),
+                        ),
+                      if (_isEditing && !_isLocked && _remainingTime != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            _remainingTime!,
+                            style: TextStyle(color: grey, fontSize: 12),
+                          ),
+                        ),
                       // Date display
                       GestureDetector(
                         onTap: _pickDate,
@@ -210,6 +247,7 @@ class _EntryEditorScreenState extends ConsumerState<EntryEditorScreen> {
                       // Title field
                       TextField(
                         controller: _titleController,
+                        enabled: !_isLocked,
                         style: TextStyle(
                           color: fg,
                           fontSize: 24,
@@ -233,6 +271,7 @@ class _EntryEditorScreenState extends ConsumerState<EntryEditorScreen> {
                       // Content field
                       TextField(
                         controller: _contentController,
+                        enabled: !_isLocked,
                         style: TextStyle(
                           color: fg,
                           fontSize: 16,
@@ -256,6 +295,7 @@ class _EntryEditorScreenState extends ConsumerState<EntryEditorScreen> {
                 ),
               ),
               // Voice recorder bar
+              if (!_isLocked)
               VoiceRecorderBar(
                 onTranscriptionComplete: (title, body, audioPath) {
                   // First sentence becomes title (if title field is empty)

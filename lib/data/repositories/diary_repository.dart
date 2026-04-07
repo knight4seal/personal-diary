@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:path_provider/path_provider.dart';
@@ -41,6 +42,7 @@ class DiaryRepository {
       isVoiceTranscribed: Value(isVoiceTranscribed),
       audioFilePath: Value(audioFilePath),
       audioCreatedAt: Value(audioCreatedAt),
+      lastEditedAt: Value(now),
       createdAt: Value(now),
       updatedAt: Value(now),
     ));
@@ -67,9 +69,14 @@ class DiaryRepository {
           Value(isVoiceTranscribed ?? existing.isVoiceTranscribed),
       audioFilePath: Value(audioFilePath ?? existing.audioFilePath),
       audioCreatedAt: Value(audioCreatedAt ?? existing.audioCreatedAt),
+      lastEditedAt: Value(DateTime.now()),
       createdAt: Value(existing.createdAt),
       updatedAt: Value(DateTime.now()),
     ));
+  }
+
+  bool isEditable(DiaryEntry entry) {
+    return DateTime.now().difference(entry.lastEditedAt).inHours < 72;
   }
 
   Future<void> deleteEntry(int id) async {
@@ -112,6 +119,7 @@ class DiaryRepository {
       buffer.write('"title":${e.title != null ? '"${_escape(e.title!)}"' : 'null'},');
       buffer.write('"content":"${_escape(e.content)}",');
       buffer.write('"isVoiceTranscribed":${e.isVoiceTranscribed},');
+      buffer.write('"lastEditedAt":"${e.lastEditedAt.toIso8601String()}",');
       buffer.write('"createdAt":"${e.createdAt.toIso8601String()}",');
       buffer.write('"updatedAt":"${e.updatedAt.toIso8601String()}"');
       buffer.write('}');
@@ -124,4 +132,62 @@ class DiaryRepository {
 
   String _escape(String s) =>
       s.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('\n', '\\n');
+
+  /// Imports entries from a JSON array string.
+  /// Inserts new entries and updates existing ones only if the imported
+  /// version is newer (by updatedAt / lastEditedAt).
+  /// Returns the number of entries imported or updated.
+  Future<int> importFromJson(String jsonString) async {
+    final List<dynamic> entries = jsonDecode(jsonString) as List<dynamic>;
+    int count = 0;
+
+    for (final raw in entries) {
+      final map = raw as Map<String, dynamic>;
+      final id = map['id'] as int;
+      final entryDate = DateTime.parse(map['entryDate'] as String);
+      final title = map['title'] as String?;
+      final content = map['content'] as String;
+      final isVoiceTranscribed = map['isVoiceTranscribed'] as bool? ?? false;
+      final createdAt = DateTime.parse(map['createdAt'] as String);
+      final updatedAt = DateTime.parse(map['updatedAt'] as String);
+      // lastEditedAt may or may not be present; fall back to updatedAt
+      final lastEditedAt = map['lastEditedAt'] != null
+          ? DateTime.parse(map['lastEditedAt'] as String)
+          : updatedAt;
+
+      final existing = await _db.getDiaryEntry(id);
+
+      if (existing == null) {
+        // Insert new entry
+        await _db.into(_db.diaryEntries).insert(DiaryEntriesCompanion(
+              id: Value(id),
+              entryDate: Value(entryDate),
+              title: Value(title),
+              content: Value(content),
+              isVoiceTranscribed: Value(isVoiceTranscribed),
+              lastEditedAt: Value(lastEditedAt),
+              createdAt: Value(createdAt),
+              updatedAt: Value(updatedAt),
+            ));
+        count++;
+      } else {
+        // Update only if imported version is newer
+        if (updatedAt.isAfter(existing.updatedAt)) {
+          await _db.updateDiaryEntry(DiaryEntriesCompanion(
+            id: Value(id),
+            entryDate: Value(entryDate),
+            title: Value(title),
+            content: Value(content),
+            isVoiceTranscribed: Value(isVoiceTranscribed),
+            lastEditedAt: Value(lastEditedAt),
+            createdAt: Value(createdAt),
+            updatedAt: Value(updatedAt),
+          ));
+          count++;
+        }
+      }
+    }
+
+    return count;
+  }
 }

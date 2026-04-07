@@ -56,6 +56,12 @@ class $DiaryEntriesTable extends DiaryEntries
   late final GeneratedColumn<DateTime> audioCreatedAt =
       GeneratedColumn<DateTime>('audio_created_at', aliasedName, true,
           type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _lastEditedAtMeta =
+      VerificationMeta('lastEditedAt');
+  @override
+  late final GeneratedColumn<DateTime> lastEditedAt =
+      GeneratedColumn<DateTime>('last_edited_at', aliasedName, false,
+          type: DriftSqlType.dateTime, requiredDuringInsert: true);
   static const VerificationMeta _createdAtMeta =
       VerificationMeta('createdAt');
   @override
@@ -77,6 +83,7 @@ class $DiaryEntriesTable extends DiaryEntries
         isVoiceTranscribed,
         audioFilePath,
         audioCreatedAt,
+        lastEditedAt,
         createdAt,
         updatedAt
       ];
@@ -127,6 +134,14 @@ class $DiaryEntriesTable extends DiaryEntries
           audioCreatedAt.isAcceptableOrUnknown(
               data['audio_created_at']!, _audioCreatedAtMeta));
     }
+    if (data.containsKey('last_edited_at')) {
+      context.handle(
+          _lastEditedAtMeta,
+          lastEditedAt.isAcceptableOrUnknown(
+              data['last_edited_at']!, _lastEditedAtMeta));
+    } else if (isInserting) {
+      context.missing(_lastEditedAtMeta);
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -162,6 +177,8 @@ class $DiaryEntriesTable extends DiaryEntries
           .read(DriftSqlType.string, data['${effectivePrefix}audio_file_path']),
       audioCreatedAt: attachedDatabase.typeMapping.read(
           DriftSqlType.dateTime, data['${effectivePrefix}audio_created_at']),
+      lastEditedAt: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}last_edited_at'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
@@ -183,6 +200,7 @@ class DiaryEntry extends DataClass implements Insertable<DiaryEntry> {
   final bool isVoiceTranscribed;
   final String? audioFilePath;
   final DateTime? audioCreatedAt;
+  final DateTime lastEditedAt;
   final DateTime createdAt;
   final DateTime updatedAt;
   const DiaryEntry({
@@ -193,6 +211,7 @@ class DiaryEntry extends DataClass implements Insertable<DiaryEntry> {
     required this.isVoiceTranscribed,
     this.audioFilePath,
     this.audioCreatedAt,
+    required this.lastEditedAt,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -212,6 +231,7 @@ class DiaryEntry extends DataClass implements Insertable<DiaryEntry> {
     if (!nullToAbsent || audioCreatedAt != null) {
       map['audio_created_at'] = Variable<DateTime>(audioCreatedAt);
     }
+    map['last_edited_at'] = Variable<DateTime>(lastEditedAt);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -231,6 +251,7 @@ class DiaryEntry extends DataClass implements Insertable<DiaryEntry> {
       audioCreatedAt: audioCreatedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(audioCreatedAt),
+      lastEditedAt: Value(lastEditedAt),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -248,6 +269,7 @@ class DiaryEntry extends DataClass implements Insertable<DiaryEntry> {
           serializer.fromJson<bool>(json['isVoiceTranscribed']),
       audioFilePath: serializer.fromJson<String?>(json['audioFilePath']),
       audioCreatedAt: serializer.fromJson<DateTime?>(json['audioCreatedAt']),
+      lastEditedAt: serializer.fromJson<DateTime>(json['lastEditedAt']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -263,6 +285,7 @@ class DiaryEntry extends DataClass implements Insertable<DiaryEntry> {
       'isVoiceTranscribed': serializer.toJson<bool>(isVoiceTranscribed),
       'audioFilePath': serializer.toJson<String?>(audioFilePath),
       'audioCreatedAt': serializer.toJson<DateTime?>(audioCreatedAt),
+      'lastEditedAt': serializer.toJson<DateTime>(lastEditedAt),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -276,6 +299,7 @@ class DiaryEntry extends DataClass implements Insertable<DiaryEntry> {
     bool? isVoiceTranscribed,
     Value<String?> audioFilePath = const Value.absent(),
     Value<DateTime?> audioCreatedAt = const Value.absent(),
+    DateTime? lastEditedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) =>
@@ -289,6 +313,7 @@ class DiaryEntry extends DataClass implements Insertable<DiaryEntry> {
             audioFilePath.present ? audioFilePath.value : this.audioFilePath,
         audioCreatedAt:
             audioCreatedAt.present ? audioCreatedAt.value : this.audioCreatedAt,
+        lastEditedAt: lastEditedAt ?? this.lastEditedAt,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
@@ -302,6 +327,7 @@ class DiaryEntry extends DataClass implements Insertable<DiaryEntry> {
           ..write('isVoiceTranscribed: $isVoiceTranscribed, ')
           ..write('audioFilePath: $audioFilePath, ')
           ..write('audioCreatedAt: $audioCreatedAt, ')
+          ..write('lastEditedAt: $lastEditedAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -310,7 +336,7 @@ class DiaryEntry extends DataClass implements Insertable<DiaryEntry> {
 
   @override
   int get hashCode => Object.hash(id, entryDate, title, content,
-      isVoiceTranscribed, audioFilePath, audioCreatedAt, createdAt, updatedAt);
+      isVoiceTranscribed, audioFilePath, audioCreatedAt, lastEditedAt, createdAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -322,6 +348,7 @@ class DiaryEntry extends DataClass implements Insertable<DiaryEntry> {
           other.isVoiceTranscribed == this.isVoiceTranscribed &&
           other.audioFilePath == this.audioFilePath &&
           other.audioCreatedAt == this.audioCreatedAt &&
+          other.lastEditedAt == this.lastEditedAt &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -334,6 +361,7 @@ class DiaryEntriesCompanion extends UpdateCompanion<DiaryEntry> {
   final Value<bool> isVoiceTranscribed;
   final Value<String?> audioFilePath;
   final Value<DateTime?> audioCreatedAt;
+  final Value<DateTime> lastEditedAt;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   const DiaryEntriesCompanion({
@@ -344,6 +372,7 @@ class DiaryEntriesCompanion extends UpdateCompanion<DiaryEntry> {
     this.isVoiceTranscribed = const Value.absent(),
     this.audioFilePath = const Value.absent(),
     this.audioCreatedAt = const Value.absent(),
+    this.lastEditedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -355,10 +384,12 @@ class DiaryEntriesCompanion extends UpdateCompanion<DiaryEntry> {
     this.isVoiceTranscribed = const Value.absent(),
     this.audioFilePath = const Value.absent(),
     this.audioCreatedAt = const Value.absent(),
+    required DateTime lastEditedAt,
     required DateTime createdAt,
     required DateTime updatedAt,
   })  : entryDate = Value(entryDate),
         content = Value(content),
+        lastEditedAt = Value(lastEditedAt),
         createdAt = Value(createdAt),
         updatedAt = Value(updatedAt);
   static Insertable<DiaryEntry> custom({
@@ -369,6 +400,7 @@ class DiaryEntriesCompanion extends UpdateCompanion<DiaryEntry> {
     Expression<bool>? isVoiceTranscribed,
     Expression<String>? audioFilePath,
     Expression<DateTime>? audioCreatedAt,
+    Expression<DateTime>? lastEditedAt,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
   }) {
@@ -381,6 +413,7 @@ class DiaryEntriesCompanion extends UpdateCompanion<DiaryEntry> {
         'is_voice_transcribed': isVoiceTranscribed,
       if (audioFilePath != null) 'audio_file_path': audioFilePath,
       if (audioCreatedAt != null) 'audio_created_at': audioCreatedAt,
+      if (lastEditedAt != null) 'last_edited_at': lastEditedAt,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -394,6 +427,7 @@ class DiaryEntriesCompanion extends UpdateCompanion<DiaryEntry> {
     Value<bool>? isVoiceTranscribed,
     Value<String?>? audioFilePath,
     Value<DateTime?>? audioCreatedAt,
+    Value<DateTime>? lastEditedAt,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
   }) {
@@ -405,6 +439,7 @@ class DiaryEntriesCompanion extends UpdateCompanion<DiaryEntry> {
       isVoiceTranscribed: isVoiceTranscribed ?? this.isVoiceTranscribed,
       audioFilePath: audioFilePath ?? this.audioFilePath,
       audioCreatedAt: audioCreatedAt ?? this.audioCreatedAt,
+      lastEditedAt: lastEditedAt ?? this.lastEditedAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -434,6 +469,9 @@ class DiaryEntriesCompanion extends UpdateCompanion<DiaryEntry> {
     if (audioCreatedAt.present) {
       map['audio_created_at'] = Variable<DateTime>(audioCreatedAt.value);
     }
+    if (lastEditedAt.present) {
+      map['last_edited_at'] = Variable<DateTime>(lastEditedAt.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -453,6 +491,7 @@ class DiaryEntriesCompanion extends UpdateCompanion<DiaryEntry> {
           ..write('isVoiceTranscribed: $isVoiceTranscribed, ')
           ..write('audioFilePath: $audioFilePath, ')
           ..write('audioCreatedAt: $audioCreatedAt, ')
+          ..write('lastEditedAt: $lastEditedAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))

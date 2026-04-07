@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:personal_diary/data/database/app_database.dart';
 import 'package:personal_diary/data/repositories/diary_repository.dart';
 import 'package:personal_diary/core/extensions/date_extensions.dart';
+import 'package:personal_diary/services/drive_sync_service.dart';
 
 enum ViewMode { daily, weekly, monthly, yearly }
 
@@ -12,6 +13,11 @@ final databaseProvider = Provider<AppDatabase>((ref) {
 final diaryRepositoryProvider = Provider<DiaryRepository>((ref) {
   final db = ref.watch(databaseProvider);
   return DiaryRepository(db);
+});
+
+final driveSyncServiceProvider = Provider<DriveSyncService>((ref) {
+  final repo = ref.watch(diaryRepositoryProvider);
+  return DriveSyncService(repo);
 });
 
 final selectedDateProvider = StateProvider<DateTime>((ref) {

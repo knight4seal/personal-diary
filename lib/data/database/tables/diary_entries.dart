@@ -9,6 +9,7 @@ class DiaryEntries extends Table {
       boolean().withDefault(const Constant(false))();
   TextColumn get audioFilePath => text().nullable()();
   DateTimeColumn get audioCreatedAt => dateTime().nullable()();
+  DateTimeColumn get lastEditedAt => dateTime()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 }

@@ -211,6 +211,7 @@ class _DailyViewScreenState extends ConsumerState<DailyViewScreen> {
                             content: entry.content,
                             dateTime: entry.entryDate,
                             isVoiceTranscribed: entry.isVoiceTranscribed,
+                            lastEditedAt: entry.lastEditedAt,
                           ),
                         );
                       },

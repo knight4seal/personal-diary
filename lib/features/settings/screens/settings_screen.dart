@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,11 +7,31 @@ import 'package:path_provider/path_provider.dart';
 import 'package:personal_diary/features/entry_list/providers/entry_list_provider.dart';
 import 'package:personal_diary/features/settings/providers/settings_provider.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  DateTime? _lastSyncTime;
+  bool _isSyncing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLastSyncTime();
+  }
+
+  Future<void> _loadLastSyncTime() async {
+    final syncService = ref.read(driveSyncServiceProvider);
+    final time = await syncService.getLastSyncTime();
+    if (mounted) setState(() => _lastSyncTime = time);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = ref.watch(themeModeProvider);
     final fg = isDark ? Colors.white : Colors.black;
     final bg = isDark ? Colors.black : Colors.white;
@@ -19,6 +40,9 @@ class SettingsScreen extends ConsumerWidget {
 
     final biometricEnabled = ref.watch(biometricEnabledProvider);
     final autoLockMinutes = ref.watch(autoLockTimeoutProvider);
+
+    final syncService = ref.watch(driveSyncServiceProvider);
+    final driveFolder = syncService.findGoogleDriveFolder();
 
     return Scaffold(
       backgroundColor: bg,
@@ -118,6 +142,125 @@ class SettingsScreen extends ConsumerWidget {
               ),
               Divider(color: dividerColor, indent: 24, endIndent: 24),
               const SizedBox(height: 16),
+              // Cloud Sync
+              if (!kIsWeb) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    'Cloud Sync',
+                    style: TextStyle(
+                      color: fg,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    children: [
+                      Icon(Icons.cloud, color: fg, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Google Drive',
+                        style: TextStyle(color: fg, fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    driveFolder ?? 'Google Drive folder not found',
+                    style: TextStyle(
+                      color: driveFolder != null ? grey : Colors.red[400],
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                if (_lastSyncTime != null)
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                    child: Text(
+                      'Last synced: ${_formatTime(_lastSyncTime!)}',
+                      style: TextStyle(color: grey, fontSize: 12),
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: driveFolder == null || _isSyncing
+                              ? null
+                              : () => _syncNow(context, fg, bg),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: fg,
+                            side: BorderSide(
+                                color: driveFolder != null ? fg : grey),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          child: _isSyncing
+                              ? SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: fg,
+                                  ),
+                                )
+                              : Text(
+                                  'Sync Now',
+                                  style: TextStyle(
+                                    color:
+                                        driveFolder != null ? fg : grey,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: driveFolder == null || _isSyncing
+                              ? null
+                              : () => _importFromDrive(context, fg, bg),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: fg,
+                            side: BorderSide(
+                                color: driveFolder != null ? fg : grey),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          child: Text(
+                            'Import from Drive',
+                            style: TextStyle(
+                              color: driveFolder != null ? fg : grey,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Divider(color: dividerColor, indent: 24, endIndent: 24),
+                const SizedBox(height: 16),
+              ],
               // Export
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -189,6 +332,70 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String _formatTime(DateTime time) {
+    final now = DateTime.now();
+    final diff = now.difference(time);
+    if (diff.inMinutes < 1) return 'just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${time.year}-${time.month.toString().padLeft(2, '0')}-${time.day.toString().padLeft(2, '0')} '
+        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _syncNow(BuildContext context, Color fg, Color bg) async {
+    setState(() => _isSyncing = true);
+    try {
+      final syncService = ref.read(driveSyncServiceProvider);
+      final success = await syncService.exportToGoogleDrive();
+      if (success) {
+        await _loadLastSyncTime();
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success
+                ? 'Synced to Google Drive'
+                : 'Sync failed — Google Drive folder not found'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSyncing = false);
+    }
+  }
+
+  Future<void> _importFromDrive(
+      BuildContext context, Color fg, Color bg) async {
+    setState(() => _isSyncing = true);
+    try {
+      final syncService = ref.read(driveSyncServiceProvider);
+      final jsonString = await syncService.importFromGoogleDrive();
+      if (jsonString == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No backup file found on Drive')),
+          );
+        }
+        return;
+      }
+      final repo = ref.read(diaryRepositoryProvider);
+      final count = await repo.importFromJson(jsonString);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Imported $count entries from Google Drive')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Import failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSyncing = false);
+    }
   }
 
   Future<void> _exportDiary(

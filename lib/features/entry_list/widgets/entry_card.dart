@@ -10,6 +10,7 @@ class EntryCard extends ConsumerWidget {
   final String content;
   final DateTime dateTime;
   final bool isVoiceTranscribed;
+  final DateTime lastEditedAt;
 
   const EntryCard({
     super.key,
@@ -18,6 +19,7 @@ class EntryCard extends ConsumerWidget {
     required this.content,
     required this.dateTime,
     this.isVoiceTranscribed = false,
+    required this.lastEditedAt,
   });
 
   void _showOptions(BuildContext context, WidgetRef ref) {
@@ -106,6 +108,8 @@ class EntryCard extends ConsumerWidget {
     final m = dateTime.minute.toString().padLeft(2, '0');
     final ampm = dateTime.hour >= 12 ? 'p' : 'a';
     final timeString = '$h:$m$ampm';
+    final isLocked =
+        DateTime.now().difference(lastEditedAt).inHours >= 72;
 
     return GestureDetector(
       onTap: () => context.push('/entry/edit/$id'),
@@ -146,6 +150,11 @@ class EntryCard extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: Icon(Icons.mic, size: 14, color: grey),
+                  ),
+                if (isLocked)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: Icon(Icons.lock_outline, size: 14, color: grey),
                   ),
                 Text(
                   timeString,
