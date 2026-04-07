@@ -8,8 +8,20 @@ import 'drive_sync_io.dart' if (dart.library.html) 'drive_sync_stub.dart'
 
 class DriveSyncService {
   final DiaryRepository _repository;
+  String? _customFolder;
 
   DriveSyncService(this._repository);
+
+  /// Sets a custom sync folder path (overrides Google Drive auto-detection).
+  void setCustomFolder(String? path) {
+    _customFolder = path;
+  }
+
+  /// Returns the active sync folder: custom override or auto-detected Google Drive.
+  String? getActiveSyncFolder() {
+    if (kIsWeb) return null;
+    return _customFolder ?? platform.findGoogleDriveFolder();
+  }
 
   /// Searches for a Google Drive sync folder on the local filesystem.
   /// Returns the path or null if not found.
@@ -18,12 +30,12 @@ class DriveSyncService {
     return platform.findGoogleDriveFolder();
   }
 
-  /// Exports diary data as JSON to Google Drive's local sync folder.
+  /// Exports diary data as JSON to the active sync folder.
   /// Returns true on success, false on failure.
   Future<bool> exportToGoogleDrive() async {
     if (kIsWeb) return false;
     try {
-      final driveFolder = findGoogleDriveFolder();
+      final driveFolder = getActiveSyncFolder();
       if (driveFolder == null) return false;
 
       final jsonString = await _repository.exportToJson();
@@ -42,7 +54,7 @@ class DriveSyncService {
   Future<String?> importFromGoogleDrive() async {
     if (kIsWeb) return null;
     try {
-      final driveFolder = findGoogleDriveFolder();
+      final driveFolder = getActiveSyncFolder();
       if (driveFolder == null) return null;
 
       final encoded = await platform.readBackupFile(driveFolder);
@@ -59,7 +71,7 @@ class DriveSyncService {
   Future<DateTime?> getLastSyncTime() async {
     if (kIsWeb) return null;
     try {
-      final driveFolder = findGoogleDriveFolder();
+      final driveFolder = getActiveSyncFolder();
       if (driveFolder == null) return null;
       return platform.getBackupModifiedTime(driveFolder);
     } catch (_) {

@@ -72,3 +72,28 @@ final autoLockTimeoutProvider =
   final prefs = ref.watch(sharedPreferencesProvider);
   return AutoLockTimeoutNotifier(prefs);
 });
+
+// --- Sync Folder Path ---
+
+class SyncFolderNotifier extends StateNotifier<String?> {
+  final SharedPreferences _prefs;
+  static const _key = 'sync_folder_path';
+
+  SyncFolderNotifier(this._prefs) : super(_prefs.getString(_key));
+
+  void setFolder(String path) {
+    state = path;
+    _prefs.setString(_key, path);
+  }
+
+  void resetToDefault() {
+    state = null;
+    _prefs.remove(_key);
+  }
+}
+
+final syncFolderProvider =
+    StateNotifierProvider<SyncFolderNotifier, String?>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return SyncFolderNotifier(prefs);
+});

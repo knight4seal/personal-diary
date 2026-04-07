@@ -17,11 +17,19 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   DateTime? _lastSyncTime;
   bool _isSyncing = false;
+  final _folderController = TextEditingController();
+  bool _isEditingFolder = false;
 
   @override
   void initState() {
     super.initState();
     _loadLastSyncTime();
+  }
+
+  @override
+  void dispose() {
+    _folderController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadLastSyncTime() async {
@@ -42,7 +50,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final autoLockMinutes = ref.watch(autoLockTimeoutProvider);
 
     final syncService = ref.watch(driveSyncServiceProvider);
-    final driveFolder = syncService.findGoogleDriveFolder();
+    final customFolder = ref.watch(syncFolderProvider);
+    // Apply custom folder to sync service
+    syncService.setCustomFolder(customFolder);
+    final driveFolder = syncService.getActiveSyncFolder();
+    final autoDetectedFolder = syncService.findGoogleDriveFolder();
 
     return Scaffold(
       backgroundColor: bg,
@@ -163,22 +175,119 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     children: [
                       Icon(Icons.cloud, color: fg, size: 20),
                       const SizedBox(width: 8),
-                      Text(
-                        'Google Drive',
-                        style: TextStyle(color: fg, fontSize: 16),
+                      Expanded(
+                        child: Text(
+                          'Google Drive',
+                          style: TextStyle(color: fg, fontSize: 16),
+                        ),
                       ),
+                      if (customFolder != null)
+                        TextButton(
+                          onPressed: () {
+                            ref.read(syncFolderProvider.notifier).resetToDefault();
+                            setState(() => _isEditingFolder = false);
+                          },
+                          child: Text(
+                            'Reset to default',
+                            style: TextStyle(color: grey, fontSize: 12),
+                          ),
+                        ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 8),
+                // Sync folder path display + edit
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Text(
-                    driveFolder ?? 'Google Drive folder not found',
-                    style: TextStyle(
-                      color: driveFolder != null ? grey : Colors.red[400],
-                      fontSize: 12,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Data directory',
+                        style: TextStyle(
+                          color: grey,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      if (_isEditingFolder)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _folderController,
+                                style: TextStyle(color: fg, fontSize: 13),
+                                decoration: InputDecoration(
+                                  hintText: autoDetectedFolder ?? '/path/to/sync/folder',
+                                  hintStyle: TextStyle(color: grey, fontSize: 13),
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      vertical: 8, horizontal: 8),
+                                  border: OutlineInputBorder(
+                                    borderSide: BorderSide(color: dividerColor),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: dividerColor),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: fg),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () {
+                                final path = _folderController.text.trim();
+                                if (path.isNotEmpty) {
+                                  ref.read(syncFolderProvider.notifier).setFolder(path);
+                                }
+                                setState(() => _isEditingFolder = false);
+                              },
+                              child: Icon(Icons.check, color: fg, size: 20),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () => setState(() => _isEditingFolder = false),
+                              child: Icon(Icons.close, color: grey, size: 20),
+                            ),
+                          ],
+                        )
+                      else
+                        GestureDetector(
+                          onTap: () {
+                            _folderController.text = driveFolder ?? '';
+                            setState(() => _isEditingFolder = true);
+                          },
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  driveFolder ?? 'Not configured — tap to set',
+                                  style: TextStyle(
+                                    color: driveFolder != null ? grey : Colors.red[400],
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(Icons.edit_outlined, color: grey, size: 16),
+                            ],
+                          ),
+                        ),
+                      if (customFolder != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            'Custom path (default: ${autoDetectedFolder ?? "auto-detect"})',
+                            style: TextStyle(color: grey, fontSize: 11),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 if (_lastSyncTime != null)
