@@ -1,0 +1,58 @@
+name: personal_diary
+description: "A private, encrypted personal diary with voice transcription."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  # State management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+  # Database
+  drift: ^2.22.1
+  drift_flutter: ^0.2.4
+  sqlite3_flutter_libs: ^0.5.28
+  sqlcipher_flutter_libs: ^0.6.5
+  # Secure storage
+  flutter_secure_storage: ^9.2.4
+  # Routing
+  go_router: ^15.1.2
+  # Voice recording
+  record: ^5.2.0
+  # Speech to text
+  speech_to_text: ^7.0.0
+  # Biometric auth
+  local_auth: ^2.3.0
+  # Calendar
+  table_calendar: ^3.2.0
+  # HTTP for quotes API
+  http: ^1.3.0
+  # Date formatting
+  intl: ^0.20.2
+  # Shared preferences for settings
+  shared_preferences: ^2.5.3
+  # UUID for audio files
+  uuid: ^4.5.1
+  # Path provider for file storage
+  path_provider: ^2.1.5
+  # Path utilities
+  path: ^1.9.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  drift_dev: ^2.22.1
+  build_runner: ^2.4.14
+  riverpod_generator: ^2.6.3
+  custom_lint: ^0.7.5
+  riverpod_lint: ^2.6.3
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
