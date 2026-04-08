@@ -51,6 +51,34 @@ class QuoteService {
     Quote(text: 'He who knows others is wise. He who knows himself is enlightened.', author: 'Lao Tzu'),
   ];
 
+  // Korean quotes — alternates with English quotes (odd days = English, even days = Korean)
+  static const List<Quote> _koreanQuotes = [
+    Quote(text: '천 리 길도 한 걸음부터.', author: '한국 속담'),
+    Quote(text: '고생 끝에 낙이 온다.', author: '한국 속담'),
+    Quote(text: '낙숫물이 돌을 뚫는다.', author: '한국 속담'),
+    Quote(text: '시작이 반이다.', author: '한국 속담'),
+    Quote(text: '호랑이도 제 말 하면 온다.', author: '한국 속담'),
+    Quote(text: '가는 말이 고와야 오는 말이 곱다.', author: '한국 속담'),
+    Quote(text: '콩 심은 데 콩 나고 팥 심은 데 팥 난다.', author: '한국 속담'),
+    Quote(text: '뜻이 있는 곳에 길이 있다.', author: '한국 속담'),
+    Quote(text: '백문이 불여일견.', author: '한국 속담'),
+    Quote(text: '세 살 버릇 여든까지 간다.', author: '한국 속담'),
+    Quote(text: '아는 것이 힘이다.', author: '한국 속담'),
+    Quote(text: '배움에는 끝이 없다.', author: '한국 속담'),
+    Quote(text: '오늘 걷지 않으면 내일은 뛰어야 한다.', author: '한국 속담'),
+    Quote(text: '꿈을 꾸지 않으면 이룰 수도 없다.', author: '한국 속담'),
+    Quote(text: '지혜는 경험에서 나온다.', author: '한국 속담'),
+    Quote(text: '참을 인 자 셋이면 살인도 면한다.', author: '한국 속담'),
+    Quote(text: '하늘은 스스로 돕는 자를 돕는다.', author: '한국 속담'),
+    Quote(text: '말 한마디에 천 냥 빚을 갚는다.', author: '한국 속담'),
+    Quote(text: '바다를 메우려면 돌부터 던져라.', author: '한국 속담'),
+    Quote(text: '행복은 습관이다. 그것을 몸에 지녀라.', author: '허버드'),
+    Quote(text: '삶이 있는 한 희망은 있다.', author: '키케로'),
+    Quote(text: '오직 나 자신만이 내 인생을 바꿀 수 있다.', author: '캐롤 버넷'),
+    Quote(text: '작은 기회로부터 종종 위대한 업적이 시작된다.', author: '데모스테네스'),
+    Quote(text: '매일 조금씩 나아지면 결국 큰 변화가 온다.', author: '존 우든'),
+  ];
+
   final SharedPreferences _prefs;
 
   QuoteService(this._prefs);
@@ -89,6 +117,11 @@ class QuoteService {
 
   Quote _getRandomFallbackQuote() {
     final dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year)).inDays;
-    return _fallbackQuotes[dayOfYear % _fallbackQuotes.length];
+    // Alternate: odd days = English, even days = Korean
+    if (dayOfYear % 2 == 0) {
+      return _koreanQuotes[dayOfYear ~/ 2 % _koreanQuotes.length];
+    } else {
+      return _fallbackQuotes[dayOfYear ~/ 2 % _fallbackQuotes.length];
+    }
   }
 }
