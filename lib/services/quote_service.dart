@@ -77,6 +77,17 @@ class QuoteService {
     Quote(text: '삶이 있는 한 희망은 있다.', author: '키케로'),
     Quote(text: '오직 나 자신만이 내 인생을 바꿀 수 있다.', author: '캐롤 버넷'),
     Quote(text: '작은 기회로부터 종종 위대한 업적이 시작된다.', author: '데모스테네스'),
+    // Korean authors
+    Quote(text: '나의 소원은 대한의 완전한 자주독립이오.', author: '김구'),
+    Quote(text: '죽는 날까지 하늘을 우러러 한 점 부끄럼이 없기를.', author: '윤동주'),
+    Quote(text: '님은 갔습니다. 아아, 사랑하는 나의 님은 갔습니다.', author: '한용운'),
+    Quote(text: '나 보기가 역겨워 가실 때에는 죽어도 아니 눈물 흘리오리다.', author: '김소월'),
+    Quote(text: '모든 인간은 자기 운명의 건축가이다.', author: '정주영'),
+    Quote(text: '해보기나 했어? 해보고 나서 안 된다고 해라.', author: '정주영'),
+    Quote(text: '이 세상에서 가장 아름다운 것은 마음이 고운 것이다.', author: '법정 스님'),
+    Quote(text: '무소유란 아무것도 갖지 않는 것이 아니라 불필요한 것을 갖지 않는 것이다.', author: '법정 스님'),
+    Quote(text: '오늘 내가 흘린 땀은 내일의 나를 만든다.', author: '이순신'),
+    Quote(text: '사람이 먼저다.', author: '노무현'),
   ];
 
   final SharedPreferences _prefs;
