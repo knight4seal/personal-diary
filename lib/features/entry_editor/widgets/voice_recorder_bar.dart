@@ -33,6 +33,9 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
   final stt.SpeechToText _speech = stt.SpeechToText();
   bool _speechAvailable = false;
 
+  // Language: 'en-US' for English, 'ko-KR' for Korean
+  String _selectedLocale = 'en-US';
+
   // Title/body splitting via 3-second pause
   _CapturePhase _phase = _CapturePhase.title;
   String _titleText = '';
@@ -126,6 +129,7 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
         await _speech.listen(
           onResult: _onSpeechResult,
           listenMode: stt.ListenMode.dictation,
+          localeId: _selectedLocale,
           cancelOnError: false,
           partialResults: true,
         );
@@ -198,59 +202,52 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
 
   /// Converts spoken punctuation commands into actual punctuation marks,
   /// capitalizes after periods, and ensures text ends with a period.
+  /// Supports both English and Korean spoken commands.
   String _ensurePunctuation(String text) {
     if (text.isEmpty) return text;
 
     var result = text;
 
-    // Replace spoken punctuation words with actual marks
-    // Handle variations: "period", "full stop", "comma", "question mark", "exclamation mark"
+    // English spoken punctuation
     result = result.replaceAllMapped(
-      RegExp(r'\s+period\b', caseSensitive: false),
-      (m) => '.',
-    );
+      RegExp(r'\s+period\b', caseSensitive: false), (m) => '.');
     result = result.replaceAllMapped(
-      RegExp(r'\s+full stop\b', caseSensitive: false),
-      (m) => '.',
-    );
+      RegExp(r'\s+full stop\b', caseSensitive: false), (m) => '.');
     result = result.replaceAllMapped(
-      RegExp(r'\s+comma\b', caseSensitive: false),
-      (m) => ',',
-    );
+      RegExp(r'\s+comma\b', caseSensitive: false), (m) => ',');
     result = result.replaceAllMapped(
-      RegExp(r'\s+question mark\b', caseSensitive: false),
-      (m) => '?',
-    );
+      RegExp(r'\s+question mark\b', caseSensitive: false), (m) => '?');
     result = result.replaceAllMapped(
-      RegExp(r'\s+exclamation mark\b', caseSensitive: false),
-      (m) => '!',
-    );
+      RegExp(r'\s+exclamation mark\b', caseSensitive: false), (m) => '!');
     result = result.replaceAllMapped(
-      RegExp(r'\s+exclamation point\b', caseSensitive: false),
-      (m) => '!',
-    );
+      RegExp(r'\s+exclamation point\b', caseSensitive: false), (m) => '!');
     result = result.replaceAllMapped(
-      RegExp(r'\s+new line\b', caseSensitive: false),
-      (m) => '\n',
-    );
+      RegExp(r'\s+new line\b', caseSensitive: false), (m) => '\n');
     result = result.replaceAllMapped(
-      RegExp(r'\s+new paragraph\b', caseSensitive: false),
-      (m) => '\n\n',
-    );
+      RegExp(r'\s+new paragraph\b', caseSensitive: false), (m) => '\n\n');
+    result = result.replaceAllMapped(
+      RegExp(r'^period\b', caseSensitive: false), (m) => '.');
 
-    // Also handle if "period" appears at the start of text (after pause)
-    result = result.replaceAllMapped(
-      RegExp(r'^period\b', caseSensitive: false),
-      (m) => '.',
-    );
+    // Korean spoken punctuation (마침표=period, 쉼표=comma, 물음표=?, 느낌표=!)
+    result = result.replaceAll(' 마침표', '.');
+    result = result.replaceAll(' 점', '.');
+    result = result.replaceAll(' 쉼표', ',');
+    result = result.replaceAll(' 물음표', '?');
+    result = result.replaceAll(' 느낌표', '!');
+    result = result.replaceAll(' 줄바꿈', '\n');
+    result = result.replaceAll(' 새 줄', '\n');
+    result = result.replaceAll(' 새 문단', '\n\n');
+    // Handle at start of text
+    if (result.startsWith('마침표')) result = '.${result.substring(3)}';
+    if (result.startsWith('점')) result = '.${result.substring(1)}';
 
-    // Capitalize first letter
+    // Capitalize first letter (only for Latin characters)
     result = result.trim();
-    if (result.isNotEmpty) {
+    if (result.isNotEmpty && RegExp(r'[a-z]').hasMatch(result[0])) {
       result = result[0].toUpperCase() + result.substring(1);
     }
 
-    // Capitalize letter after each period/question/exclamation
+    // Capitalize letter after each period/question/exclamation (Latin only)
     result = result.replaceAllMapped(
       RegExp(r'([.!?])\s+([a-z])'),
       (m) => '${m.group(1)} ${m.group(2)!.toUpperCase()}',
@@ -274,13 +271,14 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
   }
 
   String get _phaseLabel {
+    final isKorean = _selectedLocale == 'ko-KR';
     switch (_phase) {
       case _CapturePhase.title:
-        return 'Speaking title...';
+        return isKorean ? '제목 말하는 중...' : 'Speaking title...';
       case _CapturePhase.pauseDetected:
-        return 'Title captured! Now speak body...';
+        return isKorean ? '제목 저장됨! 이제 본문을 말하세요...' : 'Title captured! Now speak body...';
       case _CapturePhase.body:
-        return 'Speaking body...';
+        return isKorean ? '본문 말하는 중...' : 'Speaking body...';
     }
   }
 
@@ -384,14 +382,75 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
               const SizedBox(height: 4),
             ],
             // Hint when idle
-            if (_state == RecorderState.idle)
+            if (_state == RecorderState.idle) ...[
+              // Language toggle
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: () => setState(() => _selectedLocale = 'en-US'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: _selectedLocale == 'en-US' ? fg : grey,
+                            width: _selectedLocale == 'en-US' ? 1.5 : 0.5,
+                          ),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'EN',
+                          style: TextStyle(
+                            color: _selectedLocale == 'en-US' ? fg : grey,
+                            fontSize: 12,
+                            fontWeight: _selectedLocale == 'en-US'
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => setState(() => _selectedLocale = 'ko-KR'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: _selectedLocale == 'ko-KR' ? fg : grey,
+                            width: _selectedLocale == 'ko-KR' ? 1.5 : 0.5,
+                          ),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '한국어',
+                          style: TextStyle(
+                            color: _selectedLocale == 'ko-KR' ? fg : grey,
+                            fontSize: 12,
+                            fontWeight: _selectedLocale == 'ko-KR'
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
-                  'Say title → pause 3s → say body',
+                  _selectedLocale == 'ko-KR'
+                      ? '제목 말하기 → 3초 멈춤 → 본문 말하기'
+                      : 'Say title → pause 3s → say body',
                   style: TextStyle(color: grey, fontSize: 11),
                 ),
               ),
+            ],
             _buildControls(fg, grey),
           ],
         ),
