@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:personal_diary/features/auth/providers/auth_provider.dart';
@@ -15,6 +16,63 @@ class _LockScreenState extends ConsumerState<LockScreen> {
   final List<int> _pin = [];
   String? _error;
   bool _isAuthenticating = false;
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  // Map keyboard keys to PIN digits
+  static final _keyToDigit = {
+    LogicalKeyboardKey.digit0: 0,
+    LogicalKeyboardKey.digit1: 1,
+    LogicalKeyboardKey.digit2: 2,
+    LogicalKeyboardKey.digit3: 3,
+    LogicalKeyboardKey.digit4: 4,
+    LogicalKeyboardKey.digit5: 5,
+    LogicalKeyboardKey.digit6: 6,
+    LogicalKeyboardKey.digit7: 7,
+    LogicalKeyboardKey.digit8: 8,
+    LogicalKeyboardKey.digit9: 9,
+    LogicalKeyboardKey.numpad0: 0,
+    LogicalKeyboardKey.numpad1: 1,
+    LogicalKeyboardKey.numpad2: 2,
+    LogicalKeyboardKey.numpad3: 3,
+    LogicalKeyboardKey.numpad4: 4,
+    LogicalKeyboardKey.numpad5: 5,
+    LogicalKeyboardKey.numpad6: 6,
+    LogicalKeyboardKey.numpad7: 7,
+    LogicalKeyboardKey.numpad8: 8,
+    LogicalKeyboardKey.numpad9: 9,
+  };
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+
+    // Number keys
+    final digit = _keyToDigit[event.logicalKey];
+    if (digit != null) {
+      _onPinDigit(digit);
+      return KeyEventResult.handled;
+    }
+
+    // Backspace/Delete
+    if (event.logicalKey == LogicalKeyboardKey.backspace ||
+        event.logicalKey == LogicalKeyboardKey.delete) {
+      _onPinDelete();
+      return KeyEventResult.handled;
+    }
+
+    // Enter to unlock with biometrics
+    if (event.logicalKey == LogicalKeyboardKey.enter) {
+      _unlockWithBiometrics();
+      return KeyEventResult.handled;
+    }
+
+    return KeyEventResult.ignored;
+  }
 
   Future<void> _unlockWithBiometrics() async {
     if (_isAuthenticating) return;
@@ -76,7 +134,11 @@ class _LockScreenState extends ConsumerState<LockScreen> {
     final bg = isDark ? Colors.black : Colors.white;
     final grey = Colors.grey;
 
-    return Scaffold(
+    return Focus(
+      focusNode: _focusNode,
+      autofocus: true,
+      onKeyEvent: _handleKeyEvent,
+      child: Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
         backgroundColor: bg,
@@ -158,6 +220,7 @@ class _LockScreenState extends ConsumerState<LockScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 

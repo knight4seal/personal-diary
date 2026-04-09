@@ -168,14 +168,16 @@ class _WebcamDialogState extends State<_WebcamDialog> {
       backgroundColor: bg,
       insetPadding: const EdgeInsets.all(24),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 360, maxHeight: 460),
+        constraints: BoxConstraints(
+          maxWidth: 340,
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
                   Text(
@@ -197,7 +199,7 @@ class _WebcamDialogState extends State<_WebcamDialog> {
                 ],
               ),
             ),
-            // Camera preview
+            // Camera preview — flexible to fit available space
             if (_error != null)
               Padding(
                 padding: const EdgeInsets.all(32),
@@ -208,35 +210,37 @@ class _WebcamDialogState extends State<_WebcamDialog> {
                 ),
               )
             else
-              AspectRatio(
-                aspectRatio: 1,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: _stream != null
-                      ? HtmlElementView(viewType: _viewType)
-                      : Center(
-                          child: CircularProgressIndicator(
-                            color: fg,
-                            strokeWidth: 1,
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: _stream != null
+                        ? HtmlElementView(viewType: _viewType)
+                        : Center(
+                            child: CircularProgressIndicator(
+                              color: fg,
+                              strokeWidth: 1,
+                            ),
                           ),
-                        ),
+                  ),
                 ),
               ),
             // Capture button
             if (_error == null)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 child: GestureDetector(
                   onTap: _capture,
                   child: Container(
-                    width: 48,
-                    height: 48,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(color: fg, width: 3),
                     ),
                     child: Container(
-                      margin: const EdgeInsets.all(4),
+                      margin: const EdgeInsets.all(3),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: fg,
