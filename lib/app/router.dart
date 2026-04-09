@@ -10,6 +10,7 @@ import 'package:personal_diary/features/entry_list/screens/monthly_view_screen.d
 import 'package:personal_diary/features/entry_list/screens/yearly_view_screen.dart';
 import 'package:personal_diary/features/search/screens/search_screen.dart';
 import 'package:personal_diary/features/settings/screens/settings_screen.dart';
+import 'package:personal_diary/features/selfie/screens/selfie_timeline_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -69,6 +70,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/selfie-timeline',
+        builder: (context, state) => const SelfieTimelineScreen(),
       ),
     ],
   );

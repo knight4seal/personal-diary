@@ -393,6 +393,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 16),
+              Divider(color: dividerColor, indent: 24, endIndent: 24),
+              // Selfie Timeline
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                child: GestureDetector(
+                  onTap: () => context.push('/selfie-timeline'),
+                  behavior: HitTestBehavior.opaque,
+                  child: Row(
+                    children: [
+                      Icon(Icons.camera_alt_outlined, color: grey, size: 18),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Selfie Timeline',
+                          style: TextStyle(color: fg, fontSize: 16),
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, color: grey, size: 20),
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(height: 48),
               // About
               Padding(

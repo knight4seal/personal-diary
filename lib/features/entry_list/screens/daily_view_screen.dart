@@ -7,6 +7,7 @@ import 'package:personal_diary/features/entry_list/widgets/entry_card.dart';
 import 'package:personal_diary/features/entry_list/widgets/view_mode_selector.dart';
 import 'package:personal_diary/features/settings/providers/settings_provider.dart';
 import 'package:personal_diary/services/quote_service.dart';
+import 'package:personal_diary/features/selfie/widgets/selfie_thumbnail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DailyViewScreen extends ConsumerStatefulWidget {
@@ -76,25 +77,31 @@ class _DailyViewScreenState extends ConsumerState<DailyViewScreen> {
           icon: Icon(Icons.search, color: fg),
           onPressed: () => context.push('/search'),
         ),
+        leadingWidth: 48,
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            SelfieThumbnail(date: _selectedDate, size: 32),
+            const SizedBox(width: 10),
             IconButton(
               icon: Icon(Icons.chevron_left, color: fg, size: 20),
               onPressed: _goToPreviousDay,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
             ),
-            const SizedBox(width: 8),
-            Text(
-              _selectedDate.formattedDate,
-              style: TextStyle(
-                color: fg,
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                _selectedDate.formattedDate,
+                style: TextStyle(
+                  color: fg,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 4),
             IconButton(
               icon: Icon(Icons.chevron_right, color: fg, size: 20),
               onPressed: _goToNextDay,

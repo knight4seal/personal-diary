@@ -38,6 +38,8 @@ dependencies:
   shared_preferences: ^2.5.3
   # UUID for audio files
   uuid: ^4.5.1
+  # Camera for selfies
+  image_picker: ^1.1.2
   # Path provider for file storage
   path_provider: ^2.1.5
   # Path utilities
