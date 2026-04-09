@@ -168,9 +168,10 @@ class _WebcamDialogState extends State<_WebcamDialog> {
       backgroundColor: bg,
       insetPadding: const EdgeInsets.all(24),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
+        constraints: const BoxConstraints(maxWidth: 360, maxHeight: 460),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Header
             Padding(
@@ -224,12 +225,12 @@ class _WebcamDialogState extends State<_WebcamDialog> {
             // Capture button
             if (_error == null)
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 child: GestureDetector(
                   onTap: _capture,
                   child: Container(
-                    width: 56,
-                    height: 56,
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(color: fg, width: 3),
