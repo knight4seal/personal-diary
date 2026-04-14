@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
-import 'package:drift_flutter/drift_flutter.dart';
 import 'tables/diary_entries.dart';
+import 'db_opener_stub.dart'
+    if (dart.library.io) 'db_opener_native.dart'
+    if (dart.library.html) 'db_opener_web.dart';
 
 part 'app_database.g.dart';
 
@@ -11,16 +13,10 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 1;
 
+  /// Open the diary database. Native platforms use SQLCipher-backed
+  /// encrypted SQLite; web uses WasmDatabase (IndexedDB-backed).
   static AppDatabase open() {
-    return AppDatabase(
-      driftDatabase(
-        name: 'diary',
-        web: DriftWebOptions(
-          sqlite3Wasm: Uri.parse('sqlite3.wasm'),
-          driftWorker: Uri.parse('drift_worker.dart.js'),
-        ),
-      ),
-    );
+    return AppDatabase(openDiaryDatabase());
   }
 
   // --- CRUD Operations ---

@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
+	<false/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -26,27 +26,18 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>UIApplicationSceneManifest</key>
-	<dict>
-		<key>UIApplicationSupportsMultipleScenes</key>
-		<false/>
-		<key>UISceneConfigurations</key>
-		<dict>
-			<key>UIWindowSceneSessionRoleApplication</key>
-			<array>
-				<dict>
-					<key>UISceneClassName</key>
-					<string>UIWindowScene</string>
-					<key>UISceneConfigurationName</key>
-					<string>flutter</string>
-					<key>UISceneDelegateClassName</key>
-					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
-					<key>UISceneStoryboardFile</key>
-					<string>Main</string>
-				</dict>
-			</array>
-		</dict>
-	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Personal Diary uses the camera so you can take a daily selfie and see how you change over time.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Personal Diary uses Face ID to unlock your private diary entries securely.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Personal Diary needs microphone access to record voice entries for your diary.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Personal Diary can save your daily selfies to the photo library.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Personal Diary can save your daily selfies to the photo library if you choose.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Personal Diary uses speech recognition to transcribe your voice recordings into text entries.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

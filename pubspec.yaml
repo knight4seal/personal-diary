@@ -15,8 +15,9 @@ dependencies:
   riverpod_annotation: ^2.6.1
   # Database
   drift: ^2.22.1
-  drift_flutter: ^0.2.4
-  sqlite3_flutter_libs: ^0.5.28
+  # drift_flutter removed — it transitively pulls sqlite3_flutter_libs which
+  # conflicts with sqlcipher_flutter_libs on iOS (duplicate plugin class).
+  # We use conditional imports to select native or web backend manually.
   sqlcipher_flutter_libs: ^0.6.5
   # Secure storage
   flutter_secure_storage: ^9.2.4
@@ -55,6 +56,12 @@ dev_dependencies:
   custom_lint: ^0.7.5
   riverpod_lint: ^2.6.3
   mocktail: ^1.0.4
+
+# Force newer record_linux that implements startStream — old 0.7.2 breaks
+# kernel_snapshot because record_platform_interface 1.5.0 added the method.
+# record 5.2.1 pins record_linux ^0.7.0 (too old); override bypasses that.
+dependency_overrides:
+  record_linux: ^1.3.0
 
 flutter:
   uses-material-design: true
